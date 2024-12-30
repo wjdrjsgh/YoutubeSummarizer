@@ -6,6 +6,11 @@ from youtube_transcript_api.formatters import TextFormatter
 app = Flask(__name__)
 
 # Flask 서버 코드
+
+@app.route('/')
+def index():
+    return "Heroku Flask App is running!"
+
 @app.route('/transcript', methods=['POST'])
 def get_transcript():
     data = request.json
