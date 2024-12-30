@@ -1,3 +1,4 @@
+import os  # 추가
 from flask import Flask, request, jsonify
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
@@ -50,4 +51,5 @@ def get_transcript():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Heroku 환경 변수에서 포트 가져오기
+    app.run(host="0.0.0.0", port=port)  # 0.0.0.0으로 변경
