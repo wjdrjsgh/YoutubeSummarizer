@@ -15,7 +15,7 @@ def index():
 def get_transcript():
     try:
         # 요청 데이터 확인
-        data = request.json
+        data = request.get_json()
         if not data or not isinstance(data, dict):
             return jsonify({"error": "Invalid request body. Expected JSON format."}), 400
         
@@ -41,7 +41,7 @@ def get_transcript():
             try:
                 transcript = transcripts.find_transcript([lang])
                 break
-            except:
+            except Exception:
                 continue
 
         # 다른 언어 자막 검색
