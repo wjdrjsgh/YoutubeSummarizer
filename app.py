@@ -1,11 +1,11 @@
 import os  # 추가
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # CORS 추가
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
 
 app = Flask(__name__)
-
-# Flask 서버 코드
+CORS(app)  # CORS 설정 추가
 
 @app.route('/')
 def index():
