@@ -33,6 +33,6 @@ def extract_transcript_priority(youtube_url):
     except Exception as e:
         return f"에러가 발생했습니다: {e}"
 
-youtube_url = "https://www.youtube.com/watch?v=rzkXYXKWkvg"
+youtube_url = "https://www.youtube.com/watch?v=E0XnvU-Igkc"
 result = extract_transcript_priority(youtube_url)
 print(result)

@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from youtube_transcript_api import YouTubeTranscriptApi, CouldNotRetrieveTranscript
 import logging
 import os
+import requests
 
 app = Flask(__name__)
 
@@ -73,6 +74,43 @@ def summarize():
 
     except Exception as e:
         logger.error(f"Unexpected error in /summarize: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/test_network', methods=['GET'])
+def test_network():
+    try:
+        response = requests.get("https://www.youtube.com/")
+        return jsonify({"status_code": response.status_code}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/test_transcript', methods=['GET'])
+def test_transcript():
+    try:
+        youtube_url = "https://www.youtube.com/watch?v=rzkXYXKWkvg"  # 테스트할 YouTube URL
+        transcripts = YouTubeTranscriptApi.list_transcripts(youtube_url.split("v=")[-1])
+        priority_languages = ['ko', 'en']
+        transcript = None
+
+        for lang in priority_languages:
+            try:
+                transcript = transcripts.find_transcript([lang])
+                break
+            except Exception as e:
+                logger.warning(f"Transcript for language {lang} not found: {e}")
+                continue
+
+        if transcript is None:
+            try:
+                transcript = transcripts.find_generated_transcript(['ko', 'en'])
+            except Exception as e:
+                logger.error(f"Generated transcript not found: {e}")
+                return jsonify({"error": "No transcript available for this video"}), 404
+
+        transcript_data = transcript.fetch()
+        full_text = " ".join([item['text'] for item in transcript_data])
+        return jsonify({"transcript": full_text}), 200
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
