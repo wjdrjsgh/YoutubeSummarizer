@@ -24,7 +24,7 @@ def summarize():
         video_url = data.get("url")
         if not video_url:
             return jsonify({"error": "Missing 'url' in request body"}), 400
-        
+
         # Video ID 추출
         try:
             if "watch?v=" in video_url:
@@ -40,23 +40,37 @@ def summarize():
 
         # 자막 가져오기
         try:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['ko', 'en'])
+            transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
+            priority_languages = ['ko', 'en']
+            transcript = None
+
+            for lang in priority_languages:
+                try:
+                    transcript = transcripts.find_transcript([lang])
+                    break
+                except Exception as e:
+                    logger.warning(f"Transcript for language {lang} not found: {e}")
+                    continue
+
+            if transcript is None:
+                try:
+                    transcript = transcripts.find_generated_transcript(['ko', 'en'])
+                except Exception as e:
+                    logger.error(f"Generated transcript not found: {e}")
+                    return jsonify({"error": "No transcript available for this video"}), 404
+
+            transcript_data = transcript.fetch()
+            full_text = " ".join([item['text'] for item in transcript_data])
+            logger.info(f"Transcript successfully fetched for video ID {video_id}")
         except CouldNotRetrieveTranscript:
             logger.error(f"Transcript not available for video ID: {video_id}")
             return jsonify({"error": "Transcript not available for this video"}), 404
         except Exception as e:
             logger.error(f"Error fetching transcript: {e}")
             return jsonify({"error": "An error occurred while fetching the transcript."}), 500
-        
-        # 자막 텍스트 합치기
-        try:
-            full_text = " ".join([item['text'] for item in transcript])
-            logger.info(f"Transcript successfully fetched for video ID {video_id}")
-        except Exception as e:
-            logger.error(f"Error processing transcript: {e}")
-            return jsonify({"error": "An error occurred while processing the transcript."}), 500
 
         return jsonify({"transcript": full_text})
+
     except Exception as e:
         logger.error(f"Unexpected error in /summarize: {e}")
         return jsonify({"error": str(e)}), 500
